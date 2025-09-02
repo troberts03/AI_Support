@@ -1,33 +1,33 @@
-Thoughtful AI – Simple Support Agent
+# Thoughtful AI – Simple Support Agent
 
 A lightweight chatbot built with Streamlit that answers common questions about Thoughtful AI using a small hardcoded FAQ.
 If a user’s question doesn’t match, the bot gives a short fallback answer.
 
-Requirements
+## Requirements
 
 Python 3.11 (recommended)
 streamlit
 
-Setup
+## Setup
 
 Clone or download this project
 Put the files in a folder.
 
-Create and activate a virtual environment
+## Create and activate a virtual environment
 
 python3.11 -m venv venv
 source venv/bin/activate
 
-Install dependencies
+## Install dependencies
 
 pip install -r requirements.txt
 
-Run the app
+## Run the app
 streamlit run ai_helper.py
 
 The app will open in your browser.
 
-How it works
+## How it works
 
 FAQ matching: simple keyword overlap against hardcoded Q/A pairs.
 
@@ -35,7 +35,7 @@ Fallback: if no match, gives a short generic Thoughtful AI explanation.
 
 UI: single input box + button; displays the answer.
 
-Example Questions
+## Example Questions
 
 What does the eligibility verification agent (EVA) do?
 
