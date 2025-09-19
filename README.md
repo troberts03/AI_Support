@@ -16,7 +16,8 @@ Consistent Agent Role: All models are prompted to respond as professional custom
 ## Quickstart
 1. Clone the repo
 git clone https://github.com/troberts03/AI_Support.git
-cd AI_Support
+
+    `cd AI_Support`
 
 2. Install dependencies
 pip install -r requirements.txt
@@ -27,12 +28,13 @@ pip install -r requirements.txt
 
     - Pull models:
 
-            `ollama pull llama2`
-            `ollama pull mistral`
+        `ollama pull llama2`
+
+        `ollama pull mistral`
 
     - Start the Ollama server:
 
-            `ollama serve`
+        `ollama serve`
 
 4. Run the Streamlit app
 streamlit run ai_helper.py
