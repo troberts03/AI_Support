@@ -1,64 +1,90 @@
 import streamlit as st
-import re
+import ollama
+from dotenv import load_dotenv
 
-FAQ = [
-    {
-        "q": "What does the eligibility verification agent (EVA) do?",
-        "a": "EVA automates the process of verifying a patient’s eligibility and benefits information in real-time, eliminating manual data entry errors and reducing claim rejections."
-    },
-    {
-        "q": "What does the claims processing agent (CAM) do?",
-        "a": "CAM streamlines the submission and management of claims, improving accuracy, reducing manual intervention, and accelerating reimbursements."
-    },
-    {
-        "q": "How does the payment posting agent (PHIL) work?",
-        "a": "PHIL automates the posting of payments to patient accounts, ensuring fast, accurate reconciliation of payments and reducing administrative burden."
-    },
-    {
-        "q": "Tell me about Thoughtful AI's Agents.",
-        "a": "Thoughtful AI provides a suite of AI-powered automation agents designed to streamline healthcare processes. These include Eligibility Verification (EVA), Claims Processing (CAM), and Payment Posting (PHIL), among others."
-    },
-    {
-        "q": "What are the benefits of using Thoughtful AI's agents?",
-        "a": "Using Thoughtful AI's Agents can significantly reduce administrative costs, improve operational efficiency, and reduce errors in critical processes like claims management and payment posting."
-    }
-]
+load_dotenv()
 
-def clean(s: str) -> list[str]:
-    s = s.lower()
-    s = re.sub(r"[^a-z0-9\s]+", " ", s)
-    return [w for w in s.split() if w]
+# -------------------------------
+# Generative AI
+# -------------------------------
+# def call_openai(user_q: str, context: str) -> str:
+#     # Example: integrate with paid OpenAI API
+#     return f"[OpenAI GPT] I think the answer is: {context}"
 
-def score(user_q: str, kb_q: str) -> int:
-    u = set(clean(user_q))
-    k = set(clean(kb_q))
-    return len(u & k)
+# def call_claude(user_q: str, context: str) -> str:
+#     # Example: integrate with paid Anthropic API
+#     return f"[Claude] Based on context, here’s what I’d suggest: {context}"
 
-def get_answer(user_q: str) -> str:
-    best = None
-    best_score = -1
-    for item in FAQ:
-        s = score(user_q, item["q"])
-        if s > best_score:
-            best_score = s
-            best = item
-    if best and best_score > 0:
-        return best["a"]
-    return (
-        "I couldn't find a direct match in the Thoughtful AI FAQ.\n"
-        "Thoughtful AI builds automation agents for healthcare RCM like eligibility (EVA), claims (CAM), "
-        "and payment posting (PHIL). Rephrase with the agent name for a more precise answer."
+# def call_gemini(user_q: str, context: str) -> str:
+#       Example: requires paid Gemini API
+#     return f"[Gemini] Based on context, here’s what I’d suggest: {context}"
+
+def call_ollama(user_q: str, context: str, model: str = "llama2") -> str:
+    try:
+        response = ollama.chat(
+            model=model,
+            messages=[
+                {"role": "system", "content": "You are a helpful customer support assistant. Always answer in a professional, empathetic way."},
+                {"role": "user", "content": f"Customer question: {user_q}\nContext: {context}"}
+            ]
+        )
+        return response["message"]["content"]
+    except Exception as e:
+        return f"Ollama {model} error: {e}"
+
+# -------------------------------
+# Hybrid Answering
+# -------------------------------
+def get_answers(user_q: str) -> dict:
+
+    # Context for LLM fallback
+    context = (
+        "This is a customer service scenario. Provide answers about orders, refunds, "
+        "shipping, and account management in a professional support tone."
     )
 
-st.set_page_config(page_title="Thoughtful AI Support")
-st.title("Thoughtful AI: Support Agent")
+    answers = {}
 
-question = st.text_input("Ask a question about Thoughtful AI:")
-if st.button("Ask") and question.strip():
-    answer = get_answer(question)
+    # Call multiple models for comparison
+    # answers["OpenAI GPT"]: call_openai(user_q, context),
+    # answers["Claude"]: call_claude(user_q, context),
+    # answers["Gemini"] = call_gemini(user_q, context)
+    answers["Ollama LLaMA2"] = call_ollama(user_q, context, model="llama2")
+    answers["Ollama Mistral"] = call_ollama(user_q, context, model="mistral")
+
+    return answers
+
+# -------------------------------
+# Streamlit UI
+# -------------------------------
+st.set_page_config(page_title="Customer Service AI Playground", layout="wide")
+st.title("Customer Service AI Playground")
+
+st.markdown(
+    "Ask a **customer service question** (order, refund, shipping, account help) "
+    "and compare how different AI models respond as if they were real support agents."
+)
+
+# Session state for button disabling
+if "loading" not in st.session_state:
+    st.session_state.loading = False
+
+question = st.text_input("Your question")
+
+# Ask button with disabled state
+ask_button = st.button("Ask", disabled=st.session_state.loading)
+
+if ask_button and question.strip():
+    st.session_state.loading = True
+    with st.spinner("Thinking... contacting support agents..."):
+        answers = get_answers(question)
+
     st.markdown(f"**You:** {question}")
-    st.markdown(f"**Agent:** {answer}")
-elif question.strip():
-    answer = get_answer(question)
-    st.markdown(f"**You:** {question}")
-    st.markdown(f"**Agent:** {answer}")
+
+    cols = st.columns(len(answers))
+    for i, (model, response) in enumerate(answers.items()):
+        with cols[i]:
+            st.subheader(model)
+            st.markdown(response)
+
+    st.session_state.loading = False
